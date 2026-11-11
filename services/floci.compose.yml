@@ -1,0 +1,8 @@
+# Emulador local de AWS (S3, SQS). Endpoint: http://localhost:4566
+# UI: http://localhost:4566/_floci/ui   —   export AWS_ENDPOINT_URL=http://localhost:4566
+# Cobertura parcial: validar rutas críticas contra AWS real.
+services:
+  floci:
+    image: floci/floci:2.4.0
+    ports:
+      - "127.0.0.1:4566:4566"

@@ -1,0 +1,23 @@
+# Binarios que el kit necesita. Se verifican/instalan (preguntando) al instalar el kit.
+rtk
+bat
+rg
+fd
+eza
+docker
+node
+# backend (Go)
+go
+gopls
+gofumpt
+golangci-lint
+govulncheck
+gosec
+goose
+sqlc
+oapi-codegen
+air
+# front (Vue)
+typescript-language-server
+vue-language-server
+# proyecto front: vue-tsc, eslint, vitest, playwright, openapi-typescript (via npm)

@@ -1,0 +1,2 @@
+# Plugins SOLO para proyectos backend Go.
+gopls-lsp@claude-plugins-official

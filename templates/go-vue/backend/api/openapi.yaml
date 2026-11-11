@@ -1,0 +1,24 @@
+openapi: 3.0.3
+info:
+  title: __NAME__ API
+  version: 0.1.0
+  description: Contract of the __NAME__ API. Server (oapi-codegen) and client types (openapi-typescript) are generated from this file.
+servers:
+  - url: http://localhost:__PORT__
+paths:
+  /healthz:
+    get:
+      operationId: getHealth
+      summary: Liveness check
+      responses:
+        "200":
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    example: ok

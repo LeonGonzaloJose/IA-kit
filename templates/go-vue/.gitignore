@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+backend/bin/
+backend/internal/docs/scalar.standalone.js
+backend/internal/docs/scalar.version
+.vibe-wise/
+.claude/review/
+*.log

@@ -1,0 +1,5 @@
+# Plugins que se activan SOLO en proyectos de frontend (scope proyecto, no global).
+taste-skill@taste-skill
+typescript-lsp@claude-plugins-official
+# Skills (no son plugins; se instalan con: npx skills add <repo> --skill <nombre>)
+skill: vercel-labs/agent-skills web-design-guidelines

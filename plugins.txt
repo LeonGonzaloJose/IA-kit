@@ -1,0 +1,12 @@
+# plugin@marketplace  (una por línea). install.sh las instala si faltan.
+engram@engram
+superpowers@claude-plugins-official
+context7@claude-plugins-official
+security-guidance@claude-plugins-official
+commit-commands@claude-plugins-official
+claude-md-management@claude-plugins-official
+code-review@claude-plugins-official
+octo@nyldn-plugins
+ponytail@ponytail
+# Perfiles por stack en profiles/ (backend.txt, front.txt). pyright-lsp@claude-plugins-official: opcional, solo si hay Python.
+vibe-wise@anthropic-plugin-directory

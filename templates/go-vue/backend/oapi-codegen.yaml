@@ -1,0 +1,6 @@
+# Used by `make gen`. Generates models and a net/http (Go 1.22 mux) server interface from api/openapi.yaml.
+package: api
+output: api/server.gen.go
+generate:
+  models: true
+  std-http-server: true

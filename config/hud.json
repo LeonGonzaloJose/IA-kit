@@ -1,0 +1,5 @@
+{
+  "lineLayout": "expanded",
+  "projectLineOrder": ["project", "model"],
+  "gitStatus": { "enabled": true, "showDirty": true, "showAheadBehind": true, "showFileStats": true }
+}

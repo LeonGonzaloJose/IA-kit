@@ -1,0 +1,8 @@
+# nombre  fuente (owner/repo o url git)
+claude-plugins-official  anthropics/claude-plugins-official
+engram                   git@github.com:Gentleman-Programming/engram.git
+taste-skill                      Leonxlnx/taste-skill
+nyldn-plugins                    nyldn/claude-octopus
+ponytail                         DietrichGebert/ponytail
+# "builtin": viene con Claude Code, no se agrega con `marketplace add` (install.sh solo verifica que exista)
+anthropic-plugin-directory       builtin

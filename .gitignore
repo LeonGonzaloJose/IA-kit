@@ -1,0 +1,6 @@
+.vibe-wise/
+.claude/review/
+node_modules/
+templates/go-docs/scalar.standalone.js
+templates/go-docs/scalar.version
+*.bak.*
