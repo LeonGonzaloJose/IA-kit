@@ -1,0 +1,33 @@
+go get	ask	Bash	go get github.com/x/y@v1.2.0	
+go mod edit require	ask	Bash	go mod edit -require=github.com/x/y@v1.0.0	
+go test	allow	Bash	go test ./...	
+go mod tidy	allow	Bash	go mod tidy	
+npm install pkg	ask	Bash	npm install axios	
+npm i (no pkg)	allow	Bash	npm install	
+pnpm add	ask	Bash	pnpm add vue-router	
+goose up	ask	Bash	goose -dir db/migrations postgres \\"$DSN\\" up	
+goose create	allow	Bash	goose -dir db/migrations create add_users sql	
+migrate down	ask	Bash	migrate -path db/migrations -database x down 1	
+compose down -v	ask	Bash	docker compose down -v	
+compose down	allow	Bash	docker compose down	
+rtk wrapped go get	ask	Bash	rtk go get example.com/m	
+/usr/bin/go get	ask	Bash	/usr/bin/go get example.com/m	
+go install @latest	ask	Bash	go install github.com/x/tool@latest	
+go install local	allow	Bash	go install ./cmd/api	
+make migrate-up	ask	Bash	make migrate-up	
+make migrate-down DSN	ask	Bash	make migrate-down DSN=postgres://x	
+make test	allow	Bash	make test lint	
+docker-compose down -v	ask	Bash	docker-compose down -v	
+docker-compose down	allow	Bash	docker-compose down	
+docker volume prune	ask	Bash	docker volume prune -f	
+docker system prune -vol	ask	Bash	docker system prune --volumes	
+docker system prune	allow	Bash	docker system prune	
+edit CI workflow	ask	Edit	.github/workflows/ci.yml	x
+edit go.mod require	ask	Edit	backend/go.mod	require github.com/x/y v1.0.0
+edit go.mod module only	allow	Edit	backend/go.mod	module example.com/app
+edit package.json dep	ask	Edit	frontend/package.json	"axios": "^1.7.0"
+edit package.json script	allow	Edit	frontend/package.json	"dev": "vite"
+edit existing migration	ask	Edit	backend/db/migrations/00001_init.sql	ALTER
+write NEW migration	allow	Write	backend/db/migrations/00002_users.sql	CREATE TABLE
+edit go source	allow	Edit	backend/internal/x.go	func a(){}
+garbage fails open	allow	raw	not json	

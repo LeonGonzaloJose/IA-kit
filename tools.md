@@ -42,7 +42,7 @@ Commands and agents pin their model in frontmatter (`model:`), so costs stay pre
 
 ## Kit commands
 `/setup-kit` configure the kit (repeatable) · `/kit-help` explain it · `/kit-doctor` health check · `/estudio` study mode · `/nuevo-proyecto` define + generate a project · `/plan` · `/implementar` · `/revisar` pre-commit review by risk · `/auditar` whole-project audit (agent `auditor-seguridad`).
-Project generator: `kit/root/bin/new-project.sh <name> [--services …]` (deterministic; used by `/nuevo-proyecto`).
+Project generator: `kit/root/bin/new-project.sh <name> [--services …] [--no-harness]` (deterministic; used by `/nuevo-proyecto`). Projects with Postgres get an integration harness (`make test-integration`); the kit itself is checked with `bash tests/harness.sh`.
 
 ## Profiles (only if the project asks)
 - **backend → gopls-lsp**. **front → typescript-lsp, taste-skill, web-design-guidelines** (UI quality for front projects only).

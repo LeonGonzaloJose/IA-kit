@@ -24,6 +24,37 @@ grep -q 'module example.com/demo' "$TMP/demo/backend/go.mod" && ok "module subst
 grep -qE 'elasticsearch|redis|postgres|floci' "$TMP/demo/docker-compose.yml" && ok "compose has services" || bad "compose services"
 if command -v docker >/dev/null; then docker compose -f "$TMP/demo/docker-compose.yml" config -q 2>/dev/null && ok "compose is valid" || bad "compose invalid"; fi
 if command -v go >/dev/null; then (cd "$TMP/demo/backend" && go vet ./... >/dev/null 2>&1) && ok "backend passes go vet" || bad "go vet"; fi
+[ -f "$TMP/demo/backend/harness.mk" ] && [ -x "$TMP/demo/backend/scripts/test-integration.sh" ] && [ -f "$TMP/demo/backend/internal/testutil/db.go" ] && [ -f "$TMP/demo/docs/HARNESS.md" ] && ok "harness installed with postgres" || bad "harness files"
+grep -q 'jackc/pgx/v5' "$TMP/demo/backend/go.mod" && grep -q '^include harness.mk' "$TMP/demo/backend/Makefile" && grep -q 'make test-integration' "$TMP/demo/CLAUDE.md" && ok "harness wired (go.mod, Makefile, CLAUDE.md)" || bad "harness wiring"
+bash -n "$TMP/demo/backend/scripts/test-integration.sh" && ok "integration script parses" || bad "integration script syntax"
+[ -f "$TMP/demo/backend/cmd/api/contract_test.go" ] && ok "contract test generated" || bad "contract test missing"
+no_harness() { # no_harness <dir>: nothing of the harness may be left behind
+  [ -f "$1/backend/Makefile" ] && [ -f "$1/CLAUDE.md" ] && [ -f "$1/backend/go.mod" ] && [ ! -e "$1/backend/harness.mk" ] && [ ! -e "$1/backend/scripts" ] && [ ! -e "$1/backend/internal/testutil" ] && [ ! -e "$1/docs/HARNESS.md" ] &&
+    ! grep -q 'harness.mk' "$1/backend/Makefile" && ! grep -q 'test-integration' "$1/CLAUDE.md" && ! grep -q 'pgx' "$1/backend/go.mod"; }
+out=$("$GEN" nh --dir "$TMP/nh" --no-vendor --no-harness 2>/dev/null)
+no_harness "$TMP/nh" && [ -f "$TMP/nh/backend/cmd/api/contract_test.go" ] && [ "$(jq -r .harness <<<"$out")" = skipped ] && ok "--no-harness skips the harness" || bad "--no-harness"
+out=$("$GEN" nopg --dir "$TMP/nopg" --no-vendor --services redis 2>/dev/null)
+no_harness "$TMP/nopg" && [ "$(jq -r .harness <<<"$out")" = skipped ] && ok "no postgres, no harness" || bad "harness without postgres"
+out=$("$GEN" yes --dir "$TMP/yes" --no-vendor 2>/dev/null); [ "$(jq -r .harness <<<"$out")" = installed ] && ok "summary reports the harness" || bad "summary harness field"
+if command -v go >/dev/null; then
+  (cd "$TMP/demo/backend" && go test ./cmd/... -count=1 >/dev/null 2>&1) && ok "generated contract test passes" || bad "generated contract test"
+  # a GET in the contract with no route must fail even though it declares 404
+  printf '  /ghost:\n    get:\n      responses:\n        "404":\n          description: nope\n' >> "$TMP/yes/backend/api/openapi.yaml"
+  tail -n 1 "$TMP/yes/backend/api/openapi.yaml" | grep -q 'description: nope' || bad "could not append /ghost to the contract"
+  (cd "$TMP/yes/backend" && go test ./cmd/... -count=1 2>&1 | grep -q 'GET /ghost is in the contract but not registered') && ok "unimplemented route is not a false green" || bad "unimplemented route went undetected"
+fi
+if [ "${KIT_TEST_DOCKER:-0}" = 1 ]; then
+  # own compose project: `down -v` must never reach another project's volumes
+  export COMPOSE_PROJECT_NAME="kit-test-$$"
+  # --no-vendor leaves a placeholder that the docs test rightly rejects; stand in for the real bundle
+  printf '// test stand-in for the Scalar bundle%*s\n' 1200 '' > "$TMP/demo/backend/internal/docs/scalar.standalone.js"
+  trap '(cd "$TMP/demo" 2>/dev/null && docker compose down -v >/dev/null 2>&1); rm -rf "$TMP"' EXIT
+  trap 'exit 143' INT TERM HUP
+  if (cd "$TMP/demo" && docker compose up -d postgres >"$TMP/docker.log" 2>&1 && cd backend && make test-integration >>"$TMP/docker.log" 2>&1); then ok "make test-integration passes (docker)"
+  else bad "make test-integration (docker)"; tail -n 15 "$TMP/docker.log"; fi
+  left=$(cd "$TMP/demo" && docker compose exec -T postgres psql -qAt -U app -d postgres -c "SELECT count(*) FROM pg_database WHERE datname LIKE 'app\_test\_%'" 2>/dev/null)
+  [ "$left" = 0 ] && ok "no throwaway database left behind" || bad "throwaway databases left: ${left:-could not query postgres}"
+fi
 exp "refuses non-empty dir" 3 demo --dir "$TMP/demo" --no-vendor
 "$GEN" onlyback --dir "$TMP/ob" --no-front --no-vendor >/dev/null 2>&1; [ ! -d "$TMP/ob/frontend" ] && [ -d "$TMP/ob/backend" ] && ok "--no-front" || bad "--no-front"
 exit $fail

@@ -1,6 +1,6 @@
 ---
 description: Explica el kit: qué incluye, cuándo usar cada cosa y cómo configurarlo
-argument-hint: "[comandos | plugins | perfiles | flujo | modelos | ahorro | <nombre>]"
+argument-hint: "[comandos | plugins | perfiles | flujo | modelos | arnes | ahorro | <nombre>]"
 model: haiku
 ---
 Explicar el kit al desarrollador. Leer solo lo necesario desde `${CLAUDE_CONFIG_DIR:-~/.claude}/kit/root` (`VERSION`, `tools.md`, `plugins.txt`, `profiles/*.txt`, `commands/*.md` leyendo únicamente el front-matter). Tema pedido: "$ARGUMENTS" (vacío = visión general). No inventar: si algo no está en esos archivos, decirlo.
@@ -20,6 +20,7 @@ Explicar el kit al desarrollador. Leer solo lo necesario desde `${CLAUDE_CONFIG_
 - `perfiles`: qué trae cada uno y cómo activarlo.
 - `flujo`: el ciclo plan → implementar → revisar → auditar → commit, con cuándo saltarlo (cambios triviales).
 - `modelos`: tabla de qué modelo (haiku/sonnet/opus) se usa en cada tarea, leída de la sección "Models per task" de `tools.md`, y cómo escalar o cambiar con `/model`.
+- `arnes`: el arnés del kit (`bash tests/harness.sh`: casos de hooks en `tests/cases/*.tsv` + chequeos de contrato) y el de integración que genera cada proyecto con Postgres (`make test-integration`, `docs/HARNESS.md`); leer `docs/plans/arnes.md`.
 - `ahorro`: cómo funcionan los umbrales (guardar en engram a 200k tokens, auto-compact a 250k), qué se guarda en engram antes de compactar y cómo retomar.
 - `<nombre>` de un comando o plugin: explicarlo en detalle leyendo su archivo.
 Si algo no funciona, sugerir `/kit-doctor`. Si el usuario parece perdido, sugerir `/setup-kit estado`.

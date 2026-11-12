@@ -1,0 +1,42 @@
+read .env	deny	Read	/repo/.env	
+read .env.production	deny	Read	/repo/.env.production	
+read .env.example	allow	Read	/repo/.env.example	
+read credentials.json	deny	Read	/repo/credentials.json	
+read pem	deny	Read	/repo/certs/server.pem	
+read go source	allow	Read	/repo/cmd/api/main.go	
+grep path .env	deny	Grep	/repo/.env	
+bash cat .env	deny	Bash	cat .env	
+bash cat ssh key	deny	Bash	cat ~/.ssh/id_ed25519	
+bash cat aws creds	deny	Bash	cat ~/.aws/credentials	
+bash cat .env.example	allow	Bash	cat .env.example	
+bash gitignore append	allow	Bash	echo ".env" >> .gitignore	
+bash go test	allow	Bash	go test ./...	
+bash jq filter .env	allow	Bash	jq -c ".env, .x" settings.json	
+bash rtk cat .env.local	deny	Bash	rtk cat .env.local	
+bash pipeline cat .env	deny	Bash	echo hi && cat ./backend/.env	
+bash cat quoted .env	deny	Bash	cat ".env.local"	
+bash /bin/cat .env	deny	Bash	/bin/cat .env	
+bash /usr/bin/cat .env	deny	Bash	/usr/bin/cat ./.env	
+bash xargs cat .env	deny	Bash	xargs -n1 cat .env	
+bash echo .env | xargs	deny	Bash	echo .env | xargs cat	
+bash git show HEAD:.env	deny	Bash	git show HEAD:.env	
+bash git cat-file .env	deny	Bash	git cat-file -p HEAD:backend/.env	
+bash git show example	allow	Bash	git show HEAD:.env.example	
+bash git log	allow	Bash	git log --oneline -5	
+bash python3 -c open .env	deny	Bash	python3 -c "print(open('.env').read())"	
+bash node -e readFile	deny	Bash	node -e "console.log(require('fs').readFileSync('.env.local','utf8'))"	
+bash python3 -c harmless	allow	Bash	python3 -c "import os; print(os.environ.get('HOME'), d.key)"	
+bash python3 -c example	allow	Bash	python3 -c "print(open('.env.example').read())"	
+bash cat glob .e*	deny	Bash	cat .e*	
+bash cat glob .en?	deny	Bash	cat .en?	
+bash cat glob .env*	deny	Bash	cat .env*	
+bash cat glob .env.ex*	allow	Bash	cat .env.ex*	
+bash cat *.json	allow	Bash	cat *.json	
+bash docker run env-file	deny	Bash	docker run --rm --env-file .env alpine env	
+bash docker run env-file=	deny	Bash	docker run --env-file=./backend/.env.production alpine	
+bash docker run example	allow	Bash	docker run --env-file .env.example alpine	
+bash docker compose up	allow	Bash	docker compose --env-file .env up -d	
+fail-open printenv	allow	Bash	printenv	
+fail-open /proc environ	allow	Bash	cat /proc/self/environ	
+fail-open redirection	allow	Bash	while read -r l; do echo "$l"; done < .env	
+garbage fails open	allow	raw	not json	

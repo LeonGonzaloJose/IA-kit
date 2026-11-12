@@ -3,7 +3,7 @@
 # (the docs vendor step downloads the Scalar JS unless --no-vendor). JSON summary on stdout, progress on stderr.
 #
 #   new-project.sh <kebab-name> [--dir PATH] [--module GO/MODULE] [--port N] [--title TEXT]
-#                  [--services postgres,redis,elasticsearch,floci] [--no-front|--no-back] [--no-vendor] [--dry-run]
+#                  [--services postgres,redis,elasticsearch,floci] [--no-front|--no-back] [--no-vendor] [--no-harness] [--dry-run]
 # Exit codes: 0 ok, 2 usage/validation, 3 target not empty, 4 template missing, 5 missing dependency.
 set -eu
 KIT="${KIT_DIR:-$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)}"
@@ -11,7 +11,7 @@ die() { echo "error: $1" >&2; exit "${2:-2}"; }
 log() { echo "• $1" >&2; }
 
 name="${1:-}"; [ -n "$name" ] || die "usage: new-project.sh <kebab-name> [options]"; shift
-dir="" module="" port="8080" title="" services="postgres" front=1 back=1 vendor=1 dry=0
+dir="" module="" port="8080" title="" services="postgres" front=1 back=1 vendor=1 harness=1 dry=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --dir) dir="${2:-}"; shift ;;
@@ -22,6 +22,7 @@ while [ $# -gt 0 ]; do
     --no-front) front=0 ;;
     --no-back) back=0 ;;
     --no-vendor) vendor=0 ;;
+    --no-harness) harness=0 ;;
     --dry-run) dry=1 ;;
     *) die "unknown option: $1" ;;
   esac; shift
@@ -38,8 +39,8 @@ IFS=',' read -ra SVC <<< "$services"
 for s in "${SVC[@]}"; do
   case "$s" in postgres|redis|elasticsearch|floci) [ -f "$KIT/services/$s.compose.yml" ] || die "service file missing: $s" 4 ;; *) die "unknown service: $s (postgres|redis|elasticsearch|floci)" ;; esac
 done
-T="$KIT/templates/go-vue"; D="$KIT/templates/go-docs"
-[ -d "$T" ] && [ -d "$D" ] || die "templates missing under $KIT/templates" 4
+T="$KIT/templates/go-vue"; D="$KIT/templates/go-docs"; HARNESS_TPL="$KIT/templates/harness"
+[ -d "$T" ] && [ -d "$D" ] && [ -d "$HARNESS_TPL" ] || die "templates missing under $KIT/templates" 4
 python3 -c "import yaml" 2>/dev/null || die "python3 with PyYAML is required to compose docker-compose.yml" 5
 target="${dir:-$PWD/$name}"
 if [ -e "$target" ] && [ -n "$(ls -A "$target" 2>/dev/null)" ]; then die "target directory is not empty: $target" 3; fi
@@ -75,6 +76,17 @@ if [ "$back" -eq 1 ]; then
   fi
   [ "$scalar" = vendored ] || echo "// PLACEHOLDER: run ./vendor.sh" > "$target/backend/internal/docs/scalar.standalone.js"
 fi
+harness_state=skipped
+case ",$services," in *,postgres,*) has_pg=1 ;; *) has_pg=0 ;; esac
+if [ "$back" -eq 1 ] && [ "$has_pg" -eq 1 ] && [ "$harness" -eq 1 ]; then
+  log "integration harness (make test-integration)"
+  copy "$HARNESS_TPL/backend" "$target/backend"; copy "$HARNESS_TPL/docs" "$target/docs"
+  # pgx version pinned here; the first `make test-integration` runs `go mod tidy` to create go.sum
+  printf '\nrequire github.com/jackc/pgx/v5 v5.13.0\n' >> "$target/backend/go.mod"
+  printf -- '- Integration harness: `cd backend && make test-integration` (Postgres in Docker, see `docs/HARNESS.md`).\n' >> "$target/CLAUDE.md"
+  printf '\ninclude harness.mk\n' >> "$target/backend/Makefile"
+  harness_state=installed
+fi
 if [ "$front" -eq 1 ]; then log "frontend"; copy "$T/frontend" "$target/frontend"; fi
 sub "$target"
 
@@ -101,4 +113,4 @@ open(os.path.join(target, "docker-compose.yml"), "w").write(
 open(os.path.join(target, ".env.example"), "w").write("\n".join(env) + "\n")
 PY
 files=$(find "$target" -type f | wc -l)
-printf '{"target":"%s","files":%s,"module":"%s","services":"%s","backend":%s,"frontend":%s,"scalar":"%s"}\n' "$target" "$files" "$module" "$services" "$([ $back -eq 1 ] && echo true || echo false)" "$([ $front -eq 1 ] && echo true || echo false)" "${scalar:-skipped}"
+printf '{"target":"%s","files":%s,"module":"%s","services":"%s","backend":%s,"frontend":%s,"scalar":"%s","harness":"%s"}\n' "$target" "$files" "$module" "$services" "$([ $back -eq 1 ] && echo true || echo false)" "$([ $front -eq 1 ] && echo true || echo false)" "${scalar:-skipped}" "$harness_state"

@@ -14,9 +14,8 @@ import (
 	"__MODULE__/internal/docs"
 )
 
-func main() {
-	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
-
+// newMux builds the router; split from main so tests can exercise it with httptest.
+func newMux(appEnv string) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -24,10 +23,17 @@ func main() {
 	})
 
 	// API manual (Scalar) from api/openapi.yaml. Never expose it unauthenticated in production.
-	if env("APP_ENV", "development") != "production" {
+	if appEnv != "production" {
 		mux.Handle("/docs/", http.StripPrefix("/docs", docs.Handler(api.Spec)))
 		slog.Info("api manual enabled", "path", "/docs/")
 	}
+	return mux
+}
+
+func main() {
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+
+	mux := newMux(env("APP_ENV", "development"))
 
 	srv := &http.Server{
 		Addr:              ":" + env("PORT", "__PORT__"),
