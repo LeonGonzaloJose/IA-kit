@@ -7,7 +7,7 @@ Go (backend) + Vue 3 (frontend), client-server, Postgres, everything in Docker. 
 
 ## Which tool, when (choose without being asked)
 - Fuzzy idea or new project → `/nuevo-proyecto` (interview → decisions → staged roadmap → generated base). Never skip the definition.
-- Defined task → `/plan` → OK → `/implementar`. Trivial changes (typo, one line) go straight in.
+- Large task → `/plan` (opens `docs/tasks/<feature>.md`) → OK → `/implementar` (task by task, `scripts/verify.sh` output as evidence). Small tasks go straight in, no document.
 - Bug → superpowers systematic-debugging before touching code.
 - Before committing → `/revisar` (lenses by risk). PR or whole diff → `/code-review`. Before publishing → `/auditar`.
 - External API/library → context7 first. Decision or finding → `mem_save`.
@@ -41,8 +41,8 @@ Commands and agents pin their model in frontmatter (`model:`), so costs stay pre
 - **floci** (4566): local AWS emulator for S3/SQS in development. Partial coverage: validate critical paths against real AWS.
 
 ## Kit commands
-`/setup-kit` configure the kit (repeatable) · `/kit-help` explain it · `/kit-doctor` health check · `/estudio` study mode · `/nuevo-proyecto` define + generate a project · `/plan` · `/implementar` · `/revisar` pre-commit review by risk · `/auditar` whole-project audit (agent `auditor-seguridad`).
-Project generator: `kit/root/bin/new-project.sh <name> [--services …] [--no-harness]` (deterministic; used by `/nuevo-proyecto`). Projects with Postgres get an integration harness (`make test-integration`); the kit itself is checked with `bash tests/harness.sh`.
+`/setup-kit` configure the kit (repeatable) · `/kit-help` explain it · `/kit-doctor` health check · `/estudio` study mode · `/nuevo-proyecto` define + generate a project · `/arnes` install/update the project harness · `/plan` · `/implementar` · `/revisar` pre-commit review by risk · `/auditar` whole-project audit (agent `auditor-seguridad`).
+Project generator: `kit/root/bin/new-project.sh <name> [--services …] [--no-harness]` (deterministic; used by `/nuevo-proyecto`). Project harness: `/arnes` (any project, new or existing; `kit/root/bin/harness-install.sh`) installs `scripts/verify.sh` (fast, no Docker; `--full` adds Postgres integration); its output is the evidence of done. The kit itself is checked with `bash tests/harness.sh`.
 
 ## Profiles (only if the project asks)
 - **backend → gopls-lsp**. **front → typescript-lsp, taste-skill, web-design-guidelines** (UI quality for front projects only).

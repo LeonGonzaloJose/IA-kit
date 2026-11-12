@@ -65,6 +65,16 @@ contract() {
     mk="${p#*@}"
     awk -v m="$mk" '$1==m{f=1} END{exit !f}' "$ROOT/marketplaces.txt" && ok "contract: marketplace $mk declared" || bad "contract: plugin $p uses undeclared marketplace $mk"
   done < "$ROOT/plugins.txt"
+  # ODD flow: task documents live in docs/tasks, and the harness output is the evidence
+  for f in plan implementar; do
+    if rg -q 'docs/tasks' "$ROOT/commands/$f.md" 2>/dev/null && rg -q 'scripts/verify\.sh' "$ROOT/commands/$f.md"; then ok "contract: $f uses docs/tasks and verify.sh"
+    else bad "contract: commands/$f must reference docs/tasks and scripts/verify.sh"; fi
+  done
+  for f in bin/compact-handoff.sh templates/go-vue/CLAUDE.md commands/revisar.md; do
+    if rg -q 'docs/tasks' "$ROOT/$f" 2>/dev/null; then ok "contract: $f knows docs/tasks"; else bad "contract: $f must reference docs/tasks"; fi
+  done
+  rg -q 'docs/plans' "$ROOT"/commands/{plan,implementar,revisar}.md 2>/dev/null
+  case $? in 1) ok "contract: task commands do not use docs/plans" ;; 0) bad "contract: docs/plans is only for the /nuevo-proyecto roadmap" ;; *) bad "contract: could not scan task commands" ;; esac
   # stale compaction thresholds must not come back
   # rg exits 1 for "no match" and 2 for an error (e.g. a missing path): only 1 is a pass
   rg -q '25 ?%' "$ROOT/CLAUDE.md" "$ROOT/tools.md" "$ROOT/commands" "$ROOT/agents" 2>/dev/null

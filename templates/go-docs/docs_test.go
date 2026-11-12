@@ -15,13 +15,13 @@ func TestHandler(t *testing.T) {
 	}
 	for path, want := range cases {
 		rec := httptest.NewRecorder()
-		h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		h.ServeHTTP(rec, httptest.NewRequestWithContext(t.Context(), http.MethodGet, path, nil))
 		if rec.Code != 200 || !strings.Contains(rec.Body.String(), want) {
 			t.Fatalf("%s: code=%d, falta %q", path, rec.Code, want)
 		}
 	}
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/docs/scalar.standalone.js", nil))
+	h.ServeHTTP(rec, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/docs/scalar.standalone.js", nil))
 	if rec.Code != 200 || rec.Body.Len() < 1000 {
 		t.Fatalf("js no servido: code=%d len=%d", rec.Code, rec.Body.Len())
 	}

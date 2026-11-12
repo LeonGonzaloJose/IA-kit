@@ -7,11 +7,12 @@
 ## How to work
 - Be brief: shortest useful answer; expand only when asked or required. One question at a time, then stop and wait.
 - Authorize: a question, review or analysis is read-only; change files only when asked to change something.
-- Size by understanding, risk and resumability, never by line count:
-  - **Small** (understood, local, resumable from the diff): do it inline, no plan file, no subagents.
-  - **Large** (several sessions, external waits, requirements that would not survive compaction): `/plan` first, then work step by step.
-  - **Always large**, whatever the size: auth/permissions, payments, SQL/migrations, secrets/config, HTTP/S3/SQS clients, dependencies, CI/Docker. Plan with acceptance criteria and run `/revisar` high.
-- "Done" needs evidence (passing test, command output, checked screen). Report what was implemented, what was verified and what is pending. Never claim verification without it.
+- Organic-driven development (ODD): ceremony follows understanding, risk and resumability, never line count. In order:
+  1. **Explore** only what is needed and **resolve doubts**: ask product decisions, answer technical ones from the code.
+  2. **Classify.** Small (understood, local, resumable from the diff): do it inline, no document, no subagents. Large (several sessions, external waits, requirements that would not survive compaction): `/plan`. Always large, whatever the size: auth/permissions, payments, SQL/migrations, secrets/config, HTTP/S3/SQS clients, dependencies, CI/Docker: `/plan` and `/revisar high`.
+  3. **Record before the first write** when large: one living document `docs/tasks/<feature>.md` (scope, tasks, acceptance criteria, evidence, next step), mirrored to Engram (`tasks/<feature>`).
+  4. **Implement task by task**; if the scope changes, update the document first.
+  5. **Close with evidence**: the project's `scripts/verify.sh` output, or a passing test, command output or checked screen. Report what was implemented, what was verified and what is pending. Never claim verification without it.
 - Ambiguity: name it in one sentence, offer 2-3 options with trade-offs, ask. Never assume silently. Verify technical claims before stating them; if the user is wrong, explain why with evidence.
 - Never run raw `git push`, `--amend`, `--no-verify` or force flags: they need the developer's approval. Stage explicit paths, never `git add -A`.
 

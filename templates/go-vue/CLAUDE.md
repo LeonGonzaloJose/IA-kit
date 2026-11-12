@@ -1,6 +1,6 @@
 # __TITLE__
 
-Go + Vue 3 + Postgres, all in Docker. Definition: `docs/PROJECT.md`; decisions: `docs/DECISIONS.md`; roadmap: `docs/plans/00-roadmap.md`.
+Go + Vue 3 + Postgres, all in Docker. Definition: `docs/PROJECT.md`; decisions: `docs/DECISIONS.md`; roadmap: `docs/plans/00-roadmap.md`; large tasks: one living document each in `docs/tasks/`.
 
 ## Commands
 - Infra: `docker compose up -d` · API: `cd backend && make run` · Front: `cd frontend && npm run dev`

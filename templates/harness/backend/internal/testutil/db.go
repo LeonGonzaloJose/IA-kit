@@ -1,3 +1,5 @@
+// kit-harness: managed file (the kit's harness-install.sh updates it; local edits are overwritten)
+
 //go:build integration
 
 // Package testutil is the integration harness: a pool on the throwaway database created by `make test-integration`.

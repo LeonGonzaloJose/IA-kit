@@ -1,0 +1,11 @@
+# Created once by the kit harness (harness-install.sh never rewrites it): add your own targets freely.
+.PHONY: verify verify-full
+
+# brings in test-integration when the Go module lives at the repo root
+-include harness.mk
+
+verify:
+	@bash scripts/verify.sh
+
+verify-full:
+	@bash scripts/verify.sh --full

@@ -27,7 +27,7 @@ Archivos: `templates/go-vue/backend/cmd/api/contract_test.go`, `templates/harnes
 5. `test-new-project.sh` (opt-in Docker): proyecto compose único `-p kit-test-$$` y `trap`.
 Aceptación: `bash tests/run-all.sh` verde; ruta GET no implementada → test de contrato rojo; hook con `exit 1` → arnés rojo; Ctrl-C en `test-integration` no deja bases huérfanas (probado a mano con Docker); `KIT_TEST_DOCKER=1` verde. Commit: `feat: project harness (v0.10.0)`.
 
-## Fase 2 — Arnés para cualquier proyecto (`/arnes`)
+## Fase 2 — Arnés para cualquier proyecto (`/arnes`)  [HECHA]
 Archivos: `bin/harness-install.sh` (nuevo, determinista), `commands/arnes.md` (nuevo, sonnet), `templates/harness/**`, `bin/new-project.sh` (pasa a llamar al instalador), `tests/test-harness-install.sh` (nuevo), `bin/doctor.sh`.
 1. `harness-install.sh <dir> [--dry-run]`: detecta Go (`go.mod`), Vue (`package.json` con vue), Postgres (compose o `db/migrations`); instala solo lo que aplica; NUNCA pisa un archivo existente (lo informa y sigue); salida JSON con lo instalado/omitido.
 2. Entradas `verify` / `verify-full`: en proyectos con Makefile se agregan como `include harness.mk`; sin Makefile, `scripts/verify.sh`. `verify` = lint + unit + contrato (+ `typecheck lint test` del front si existe); `verify-full` = `verify` + integración.
@@ -36,7 +36,11 @@ Archivos: `bin/harness-install.sh` (nuevo, determinista), `commands/arnes.md` (n
 5. Doctor (sección proyecto): WARN si el proyecto actual no tiene arnés (`/arnes`).
 Aceptación: instalar en (a) proyecto generado, (b) repo Go existente sin Makefile, (c) repo solo-front → `verify` corre en los tres; segunda corrida no cambia nada (idempotente); archivo preexistente no se pisa (test); `new-project.sh` sigue pasando sus tests.
 
-## Fase 3 — Flujo ODD
+**Evidencia (2026-11-11):** `bash tests/run-all.sh` → ALL TESTS PASSED (incluye `tests/test-harness-install.sh`: proyecto generado, repo Go existente sin Makefile, repo solo front, idempotencia, archivo propio no sobrescrito, dry-run sin escrituras, test roto y gofmt hacen fallar `verify`). `KIT_TEST_DOCKER=1 bash tests/test-new-project.sh` → `make verify-full` con integración pasa, 0 bases descartables. `bash tests/harness.sh` → 110 checks, PASS.
+**Desvíos:** la entrada única es `scripts/verify.sh [--full]`; `make verify` / `make verify-full` son alias de un Makefile raíz que solo se crea si el proyecto no tiene uno (si lo tiene, se avisa con una nota). Archivos gestionados llevan la marca `kit-harness: managed file` (se actualizan); sin marca nunca se tocan. Nuevo `HARNESS_PG_SERVICE`. El JSON de `new-project.sh` ahora da `harness: installed|verify|skipped`. El arnés detectó que los tests de las plantillas no pasaban su propio lint (`noctx`): corregido.
+**Pendiente:** `/arnes` queda disponible al reinstalar el kit (Fase 4); el doctor marca `commands/arnes.md: sin enlazar` hasta entonces.
+
+## Fase 3 — Flujo ODD  [HECHA, falta la prueba manual]
 Archivos: `CLAUDE.md`, `tools.md`, `commands/plan.md`, `commands/implementar.md`, `commands/revisar.md`, `commands/nuevo-proyecto.md`, `commands/kit-help.md`, `templates/go-vue/CLAUDE.md`, `bin/compact-handoff.sh`, `tests/harness.sh` (chequeos de contrato).
 1. `CLAUDE.md` "How to work": protocolo ordenado en pocas líneas — explorar → resolver dudas (preguntar solo decisiones de producto) → clasificar (chica / grande / siempre grande, criterios actuales) → registrar antes de la primera escritura si es grande → implementar tarea por tarea → cerrar con evidencia. Sin crecer en tokens (reemplaza el bloque actual de tamaños).
 2. `/plan`: abre o actualiza `docs/tasks/<feature>.md` y lo copia a Engram; los criterios de aceptación son comprobaciones ejecutables del arnés cuando se pueda. Espera OK.
@@ -47,8 +51,16 @@ Archivos: `CLAUDE.md`, `tools.md`, `commands/plan.md`, `commands/implementar.md`
 7. Chequeos de contrato del kit: ningún comando referencia `docs/plans/<slug>` para tareas; `plan.md` e `implementar.md` mencionan `docs/tasks` y `make verify`.
 Aceptación: `run-all.sh` verde; `CLAUDE.md` + `tools.md` no crecen más de ~10 líneas en total; prueba end-to-end en un proyecto scratch: tarea chica sin documento, tarea grande con documento + evidencia + topic en Engram, y reanudación después de `/compact` (manual, con salida pegada).
 
-## Fase 4 — Cierre
+**Evidencia (2026-11-11):** `bash tests/run-all.sh` → ALL TESTS PASSED; `bash tests/harness.sh` → 113 checks, PASS (nuevos chequeos de contrato ODD + 2 controles negativos). `CLAUDE.md` + `tools.md`: 81 → 82 líneas.
+**Desvíos:** los comandos nombran `bash scripts/verify.sh [--full]` (entrada real) en vez de `make verify`. `new-project.sh` crea `docs/tasks/.gitkeep`.
+**Pendiente:** prueba end-to-end manual en un proyecto scratch (tarea chica sin documento, tarea grande con documento + evidencia + topic en Engram, reanudación tras `/compact`): necesita una sesión nueva con el kit reinstalado.
+
+## Fase 4 — Cierre  [HECHA, sin push]
 `VERSION` 0.11.0, reinstalar (`install.sh`), `bash tests/run-all.sh`, doctor, `/revisar high`, commit `feat: ODD workflow (v0.11.0)`. Push solo con aprobación.
+
+**Evidencia (2026-11-11):** `/revisar high` (4 lentes): sin bloqueantes, 11 mayores, todos corregidos con test. `bash tests/run-all.sh` → ALL TESTS PASSED; `bash tests/harness.sh` → 116 checks, PASS; `KIT_TEST_DOCKER=1 bash tests/test-new-project.sh` → `make verify-full` con integración pasa, 0 bases descartables; reinstalado (v0.11.0), doctor 0 FAIL.
+**Corregido tras la revisión:** instalador — marca solo en las 3 primeras líneas, no escribe a través de symlinks, escritura atómica, `jq` exigido antes de escribir, detección de Postgres sin comentarios ni imágenes parecidas, `package.json` raíz solo es front si depende de vue, aviso de `go.work`/varios módulos, Makefile raíz se crea una sola vez (es del proyecto), dry-run anuncia lo mismo que la corrida real. `verify.sh` — timeout por paso y sin stdin, falta de go/node es falla, `gofmt` con error es falla, una corrida sin ningún test es FAIL. `test-integration.sh` — falla rápido si el servicio no está en el compose, `go mod tidy` también con `go.sum` existente. Docs y comandos nombran solo `bash scripts/verify.sh`.
+**Aceptado sin corregir:** `verify.sh` cubre un solo módulo Go y un front; `--full` sin script de integración es SKIPPED y no falla; `KIT_DIR` puede redirigir las plantillas; el doctor no tiene test del aviso de arnés; `verify-full` con front no se prueba de punta a punta; renombrar/partir tests y helper de aserciones.
 
 ## Fuera de alcance
 CI (GitHub Actions), e2e de navegador, floci/AWS en el arnés, evals con LLM, modo TDD configurable, migrar planes viejos.

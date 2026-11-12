@@ -24,7 +24,7 @@ fake_hooks 'exit 1';                                        expect_failure "cras
 rm -rf "$T/bin"; mkdir "$T/bin";                            expect_failure "missing hook script" "hook script missing" "$H" --bin "$T/bin" --no-contract
 expect_failure "unknown --hook" "unknown hook" "$H" --hook nope
 
-copy_kit() { rm -rf "$T/kit"; mkdir "$T/kit"; cp -r "$ROOT"/{agents,commands,config,bin,tests,plugins.txt,marketplaces.txt,CLAUDE.md,tools.md} "$T/kit/"; }
+copy_kit() { rm -rf "$T/kit"; mkdir "$T/kit"; cp -r "$ROOT"/{agents,commands,config,bin,tests,templates,plugins.txt,marketplaces.txt,CLAUDE.md,tools.md} "$T/kit/"; }
 copy_kit; echo "ghost@nowhere" >> "$T/kit/plugins.txt"
 expect_failure "undeclared marketplace" "plugin ghost@nowhere uses undeclared marketplace" "$T/kit/tests/harness.sh"
 copy_kit; sed -i '0,/^model:.*/s//model: gpt/' "$T/kit/commands/plan.md"
@@ -33,6 +33,10 @@ copy_kit; chmod -x "$T/kit/bin/guard.sh"
 expect_failure "non-executable hook" "missing or non-executable kit/bin/guard.sh" "$T/kit/tests/harness.sh"
 copy_kit; echo "compact at 25%" >> "$T/kit/tools.md"
 expect_failure "stale 25% threshold" "stale '25%' threshold" "$T/kit/tests/harness.sh"
+copy_kit; echo "write it to docs/plans/x.md" >> "$T/kit/commands/implementar.md"
+expect_failure "task command back on docs/plans" "docs/plans is only for the /nuevo-proyecto roadmap" "$T/kit/tests/harness.sh"
+copy_kit; sed -i "s#docs/tasks#docs/other#g" "$T/kit/commands/plan.md"
+expect_failure "plan without docs/tasks" "commands/plan must reference docs/tasks" "$T/kit/tests/harness.sh"
 copy_kit; : > "$T/kit/tests/cases/guard.tsv"
 expect_failure "empty cases file" "guard: no cases" "$T/kit/tests/harness.sh"
 copy_kit; rm "$T/kit/bin/guard.sh"

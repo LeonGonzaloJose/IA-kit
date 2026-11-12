@@ -172,7 +172,7 @@ func TestRegisteredIgnoresCatchAll(t *testing.T) {
 	mux.HandleFunc("GET /files/{rest...}", noop)
 	tests := map[string]bool{"/users/1": true, "/ghost": false, "/api/ghost": false, "/files/a/b": false, "/api/": true}
 	for path, want := range tests {
-		if got := registered(mux, httptest.NewRequest(http.MethodGet, path, nil)); got != want {
+		if got := registered(mux, httptest.NewRequestWithContext(t.Context(), http.MethodGet, path, nil)); got != want {
 			t.Errorf("registered(%s) = %v, want %v", path, got, want)
 		}
 	}
@@ -196,7 +196,7 @@ func TestGetRoutesMatchContract(t *testing.T) {
 	for path, codes := range gets {
 		url := pathParam.ReplaceAllString(path, "1")
 		hasParams := url != path
-		req := httptest.NewRequest(http.MethodGet, url, nil)
+		req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, url, nil)
 		if !registered(mux, req) {
 			t.Errorf("GET %s is in the contract but not registered in the router", path)
 			continue

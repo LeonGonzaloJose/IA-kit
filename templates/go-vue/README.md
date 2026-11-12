@@ -10,4 +10,4 @@ cd frontend && npm install && npm run dev
 ```
 
 The API contract lives in `backend/api/openapi.yaml` (source of truth). The manual (Scalar) is served at `/docs/` only outside production.
-Project definition and plan: `docs/PROJECT.md`, `docs/DECISIONS.md`, `docs/plans/`.
+Project definition and plan: `docs/PROJECT.md`, `docs/DECISIONS.md`, `docs/plans/`; task documents: `docs/tasks/`.

@@ -39,9 +39,10 @@ IFS=',' read -ra SVC <<< "$services"
 for s in "${SVC[@]}"; do
   case "$s" in postgres|redis|elasticsearch|floci) [ -f "$KIT/services/$s.compose.yml" ] || die "service file missing: $s" 4 ;; *) die "unknown service: $s (postgres|redis|elasticsearch|floci)" ;; esac
 done
-T="$KIT/templates/go-vue"; D="$KIT/templates/go-docs"; HARNESS_TPL="$KIT/templates/harness"
-[ -d "$T" ] && [ -d "$D" ] && [ -d "$HARNESS_TPL" ] || die "templates missing under $KIT/templates" 4
+T="$KIT/templates/go-vue"; D="$KIT/templates/go-docs"
+[ -d "$T" ] && [ -d "$D" ] && [ -x "$KIT/bin/harness-install.sh" ] || die "templates missing under $KIT/templates" 4
 python3 -c "import yaml" 2>/dev/null || die "python3 with PyYAML is required to compose docker-compose.yml" 5
+command -v jq >/dev/null || die "jq is required by the harness installer" 5
 target="${dir:-$PWD/$name}"
 if [ -e "$target" ] && [ -n "$(ls -A "$target" 2>/dev/null)" ]; then die "target directory is not empty: $target" 3; fi
 
@@ -64,7 +65,7 @@ sub() { # substitute placeholders in text files under $1
 
 log "root files"
 for f in .gitignore README.md CLAUDE.md; do cp "$T/$f" "$target/$f"; done
-mkdir -p "$target/docs/plans"
+mkdir -p "$target/docs/plans" "$target/docs/tasks"; : > "$target/docs/tasks/.gitkeep"
 
 if [ "$back" -eq 1 ]; then
   log "backend"; copy "$T/backend" "$target/backend"
@@ -75,17 +76,6 @@ if [ "$back" -eq 1 ]; then
     else log "WARNING: Scalar download or integrity check failed (see above); wrote a placeholder. Run backend/internal/docs/vendor.sh with network access."; fi
   fi
   [ "$scalar" = vendored ] || echo "// PLACEHOLDER: run ./vendor.sh" > "$target/backend/internal/docs/scalar.standalone.js"
-fi
-harness_state=skipped
-case ",$services," in *,postgres,*) has_pg=1 ;; *) has_pg=0 ;; esac
-if [ "$back" -eq 1 ] && [ "$has_pg" -eq 1 ] && [ "$harness" -eq 1 ]; then
-  log "integration harness (make test-integration)"
-  copy "$HARNESS_TPL/backend" "$target/backend"; copy "$HARNESS_TPL/docs" "$target/docs"
-  # pgx version pinned here; the first `make test-integration` runs `go mod tidy` to create go.sum
-  printf '\nrequire github.com/jackc/pgx/v5 v5.13.0\n' >> "$target/backend/go.mod"
-  printf -- '- Integration harness: `cd backend && make test-integration` (Postgres in Docker, see `docs/HARNESS.md`).\n' >> "$target/CLAUDE.md"
-  printf '\ninclude harness.mk\n' >> "$target/backend/Makefile"
-  harness_state=installed
 fi
 if [ "$front" -eq 1 ]; then log "frontend"; copy "$T/frontend" "$target/frontend"; fi
 sub "$target"
@@ -112,5 +102,13 @@ open(os.path.join(target, "docker-compose.yml"), "w").write(
     "# Local infrastructure only. Generated from kit/services; the app runs on the host.\n" + yaml.safe_dump(merged, sort_keys=False))
 open(os.path.join(target, ".env.example"), "w").write("\n".join(env) + "\n")
 PY
+harness_state=skipped
+if [ "$harness" -eq 1 ]; then
+  # after compose and backend exist: the installer detects Go, Vue and Postgres from the generated tree
+  summary="$(KIT_DIR="$KIT" "$KIT/bin/harness-install.sh" "$target")" ||
+    die "project generated, but the harness install failed (see above); retry with: $KIT/bin/harness-install.sh $target" 4
+  # verify-only: scripts/verify.sh without the Postgres integration harness
+  if [ "$(jq -r .postgres <<<"$summary")" = true ]; then harness_state=installed; else harness_state=verify-only; fi
+fi
 files=$(find "$target" -type f | wc -l)
 printf '{"target":"%s","files":%s,"module":"%s","services":"%s","backend":%s,"frontend":%s,"scalar":"%s","harness":"%s"}\n' "$target" "$files" "$module" "$services" "$([ $back -eq 1 ] && echo true || echo false)" "$([ $front -eq 1 ] && echo true || echo false)" "${scalar:-skipped}" "$harness_state"

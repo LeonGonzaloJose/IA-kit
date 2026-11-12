@@ -84,6 +84,9 @@ sec "Proyecto actual ($(basename "$PWD"))"
 [ -f go.mod ] && ok "Go detectado" ; [ -f package.json ] && ok "Node/Vue detectado"
 [ -f api/openapi.yaml ] || [ -f backend/api/openapi.yaml ] && ok "contrato openapi.yaml" || echo "        (sin contrato OpenAPI en este directorio)"
 rg -q 'swaggo|swagger-ui' go.mod backend/go.mod 2>/dev/null && warn "usa swaggo/swagger-ui: el kit usa Scalar por defecto"
+if [ -f go.mod ] || [ -f backend/go.mod ] || [ -f package.json ] || [ -f frontend/package.json ]; then
+  [ -f scripts/verify.sh ] && ok "arnés de verificación (scripts/verify.sh)" || warn "proyecto sin arnés de verificación: /arnes"
+fi
 [ -f .env ] && ! git check-ignore -q .env 2>/dev/null && fail ".env no está en .gitignore"
 
 sec "Repo del kit"
