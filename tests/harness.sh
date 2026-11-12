@@ -70,6 +70,8 @@ contract() {
     if rg -q 'docs/tasks' "$ROOT/commands/$f.md" 2>/dev/null && rg -q 'scripts/verify\.sh' "$ROOT/commands/$f.md"; then ok "contract: $f uses docs/tasks and verify.sh"
     else bad "contract: commands/$f must reference docs/tasks and scripts/verify.sh"; fi
   done
+  # the developer decides when to push: /implementar commits per task group and must say it never pushes
+  if rg -q 'Nunca `git push`' "$ROOT/commands/implementar.md" 2>/dev/null; then ok "contract: implementar never pushes"; else bad "contract: commands/implementar must forbid git push"; fi
   for f in bin/compact-handoff.sh templates/go-vue/CLAUDE.md commands/revisar.md; do
     if rg -q 'docs/tasks' "$ROOT/$f" 2>/dev/null; then ok "contract: $f knows docs/tasks"; else bad "contract: $f must reference docs/tasks"; fi
   done
